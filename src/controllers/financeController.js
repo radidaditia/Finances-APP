@@ -18,7 +18,7 @@ const createFinance = async (req, res) => {
 
   // Validasi input
   if (!title || !amount || !type) {
-    return res.status(400).json({ message: 'Semua field harus diisi' });
+    return res.status(400).json({ message: '  Semua field harus diisi' });
   }
 
   try {
@@ -76,11 +76,37 @@ const deleteFinance = async (req, res) => {
     }
 
     // Hapus data finance
-    await finance.remove();
+      await finance.deleteOne({ _id: id });
     res.status(200).json({ message: 'Data berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal menghapus data finance' });
   }
 };
 
-module.exports = { getFinances, createFinance, updateFinance, deleteFinance };
+// Controller untuk mendapatkan laporan keuangan user
+const getFinanceReport = async (req, res) => {
+  try {
+    // Cari semua data finance milik user yang sedang login
+    const finances = await Finance.find({ user: req.user.id });
+
+    // Hitung total incomes, total expenses, dan balance
+    const totalIncomes = finances
+      .filter((finance) => finance.type === 'income')
+      .reduce((acc, item) => acc + item.amount, 0);
+    const totalExpenses = finances
+      .filter((finance) => finance.type === 'expense')
+      .reduce((acc, item) => acc + item.amount, 0);
+    const balance = totalIncomes - totalExpenses;
+
+    res.status(200).json({
+      totalIncomes,
+      totalExpenses,
+      balance,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Terjadi kesalahan server' });
+  }
+};
+
+
+module.exports = { getFinances, createFinance, updateFinance, deleteFinance, getFinanceReport};
